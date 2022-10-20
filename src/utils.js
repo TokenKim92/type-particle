@@ -1,6 +1,3 @@
-export const LEFT = -1;
-export const RIGHT = 1;
-
 export const primitiveType = Object.freeze({
   string: 'string',
   number: 'number',

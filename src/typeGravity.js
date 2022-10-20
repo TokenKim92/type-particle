@@ -31,6 +31,13 @@ class TypeGravity {
   #isProcessing = false;
   #isInitialized = false;
 
+  #mouse = {
+    x: 0,
+    y: 0,
+    radius: 100,
+  };
+  #particleList = [];
+
   constructor(elementId) {
     checkType(elementId, primitiveType.string);
 
@@ -53,11 +60,16 @@ class TypeGravity {
         this.#fontRGB.a
       );
       this.#textFrameMetrics = this.#textFrame.getMetrics(this.#stageSize);
+      this.#textFrameMetrics.dotPositions.forEach((dotList) =>
+        this.#particleList.push(...dotList)
+      );
+
       this.#textCount = this.#textFrameMetrics.textFields.length;
       this.#isInitialized = true;
     }, 380);
 
     window.addEventListener('resize', this.#resize);
+    document.addEventListener('pointermove', this.#onMouseMove);
   }
 
   start = () => {
@@ -168,6 +180,11 @@ class TypeGravity {
     this.restart();
   };
 
+  #onMouseMove = (event) => {
+    this.#mouse.x = event.clientX;
+    this.#mouse.y = event.clientY;
+  };
+
   #resetStage = (padding, margin) => {
     this.#canvas.style.left = `${padding.left + margin.left}px`;
 
@@ -224,7 +241,29 @@ class TypeGravity {
     };
   };
 
-  #eventHandler = () => {};
+  #eventHandler = () => {
+    let dx, dy, dist, minDist;
+    let angle, tx, ty, ax, ay;
+
+    this.#particleList.forEach((particle) => {
+      dx = this.#mouse.x - particle.pos.x;
+      dy = this.#mouse.y - particle.pos.y;
+      dist = Math.sqrt(dx * dx + dy * dy);
+      minDist = 50;
+
+      if (dist < minDist) {
+        angle = Math.atan2(dy, dx);
+        tx = particle.pos.x + Math.cos(angle) * minDist;
+        ty = particle.pos.y + Math.sin(angle) * minDist;
+        ax = tx - this.#mouse.x;
+        ay = ty - this.#mouse.y;
+
+        particle.posVelocity.vx -= ax;
+        particle.posVelocity.vy -= ay;
+        particle.collide();
+      }
+    });
+  };
 
   get #isDoneEvent() {
     return true;
