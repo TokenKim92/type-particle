@@ -1,44 +1,40 @@
 export default class Particle {
-  static FRICTION = 0.86;
+  #orgX;
+  #orgY;
+  #spreadX;
+  #spreadY;
+  #ease;
+  #offsetDone = 10;
 
-  #orgPos;
-  #pos;
-  #posVelocity;
+  constructor(orgPos, spreadPos, alpha, ease) {
+    this.#orgX = orgPos.x;
+    this.#orgY = orgPos.y;
+    this.#spreadX = spreadPos.x;
+    this.#spreadY = spreadPos.y;
 
-  constructor(orgPos) {
-    this.#orgPos = orgPos;
+    this.#ease = ease;
+
+    this.alpha = alpha;
+
     this.reset();
   }
 
   reset() {
-    this.#pos = {
-      x: this.#orgPos.x,
-      y: this.#orgPos.y,
-    };
-
-    this.#posVelocity = {
-      vx: 0,
-      vy: 0,
-    };
+    this.x = this.#spreadX;
+    this.y = this.#spreadY;
   }
 
-  collide() {
-    this.#posVelocity.vx *= Particle.FRICTION;
-    this.#posVelocity.vy *= Particle.FRICTION;
-
-    this.#pos.x += this.#posVelocity.vx;
-    this.#pos.y += this.#posVelocity.vy;
+  update() {
+    this.x += (this.#orgX - this.x) * this.#ease;
+    this.y += (this.#orgY - this.y) * this.#ease;
   }
 
-  get posVelocity() {
-    return this.#posVelocity;
-  }
-
-  set posVelocity(posVelocity) {
-    this.#posVelocity = posVelocity;
-  }
-
-  get pos() {
-    return this.#pos;
+  get isDone() {
+    return (
+      Math.round(this.x * this.#offsetDone) ===
+        Math.round(this.#orgX * this.#offsetDone) &&
+      Math.round(this.y * this.#offsetDone) ===
+        Math.round(this.#orgY * this.#offsetDone)
+    );
   }
 }

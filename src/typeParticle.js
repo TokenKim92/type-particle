@@ -5,11 +5,18 @@ import {
   colorToRGB,
   parseIntForPadding,
   parseIntForMargin,
+  HORIZONTAL,
+  VERTICAL,
+  LEFT,
+  TOP,
+  RIGHT,
+  BOTTOM,
+  ALL_SIDE,
 } from './utils.js';
 
-class TypeGravity {
+class TypeParticle {
   static FPS = 60;
-  static FPS_TIME = 1000 / TypeGravity.FPS;
+  static FPS_TIME = 1000 / TypeParticle.FPS;
 
   #canvasContainer;
   #canvas;
@@ -19,84 +26,91 @@ class TypeGravity {
   #rootElement;
   #elementObj;
   #text;
-  #stopEventTimer;
+  #stopSpreadTimer;
   #textFrame;
-  #textFrameMetrics;
+  #particles = [];
+  #imageData;
   #stageSize;
   #backgroundSize;
-  #fontRGB;
   #rootStyle;
-  #textCount;
-  #imageData;
+  #fontRGB;
   #isProcessing = false;
   #isInitialized = false;
+  #spreadOption;
 
-  #mouse = {
-    x: 0,
-    y: 0,
-    radius: 100,
-  };
-  #particleList = [];
-
-  constructor(elementId) {
-    checkType(elementId, primitiveType.string);
-
-    this.#elementObj = document.querySelector(`#${elementId}`);
-    if (!this.#elementObj) {
-      throw new Error("This element id doesn't exit.");
-    }
+  constructor(elementId, spreadSpeed = 10, spreadMode = 'all-side') {
+    this.#typeCheck(elementId, spreadSpeed, spreadMode);
 
     this.#text = this.#elementObj.innerText;
     this.#rootStyle = window.getComputedStyle(this.#elementObj);
     this.#fontRGB = colorToRGB(this.#rootStyle.color);
+    this.#spreadOption = {
+      speed: spreadSpeed > 100 ? 100 : spreadSpeed,
+      mode: this.#parseIntSpreadMode(spreadMode),
+      alpha: this.#fontRGB.a,
+    };
 
     this.#createRootElement();
+
     setTimeout(() => {
       this.#createCanvases();
+
       this.#textFrame = new TextFrame(
         this.#ctx,
         this.#rootStyle,
         this.#text,
-        this.#fontRGB.a
-      );
-      this.#textFrameMetrics = this.#textFrame.getMetrics(this.#stageSize);
-      this.#textFrameMetrics.dotPositions.forEach((dotList) =>
-        this.#particleList.push(...dotList)
+        this.#spreadOption
       );
 
-      this.#textCount = this.#textFrameMetrics.textFields.length;
+      this.#particles = this.#textFrame.getParticles(this.#stageSize);
+      this.#ctx.fillStyle = this.#rootStyle.color;
       this.#isInitialized = true;
     }, 380);
 
     window.addEventListener('resize', this.#resize);
-    document.addEventListener('pointermove', this.#onMouseMove);
   }
 
   start = () => {
     if (!this.#isProcessing) {
-      this.#setEventTimer();
+      this.#setSpreadTimer();
       this.#isProcessing = true;
     }
   };
 
   stop = () => {
     if (this.#isProcessing) {
-      this.#stopEventTimer();
+      this.#stopSpreadTimer();
       this.#isProcessing = false;
     }
   };
 
   restart = () => {
     if (this.#isProcessing) {
-      this.#stopEventTimer();
+      this.#stopSpreadTimer();
     }
 
-    this.#ctx.clearRect(0, 0, this.#canvas.width, this.#canvas.height);
-    this.#imageData = this.#ctx.getImageData(0, 0, this.#stageSize.width, this.#stageSize.height); // prettier-ignore
+    this.#particles.forEach((particle) => particle.reset());
     this.#isProcessing = true;
 
-    this.#setEventTimer();
+    this.#setSpreadTimer();
   };
+
+  #typeCheck(elementId, spreadSpeed, spreadMode) {
+    checkType(elementId, primitiveType.string);
+    checkType(spreadSpeed, primitiveType.number);
+    checkType(spreadMode, primitiveType.string);
+
+    this.#elementObj = document.querySelector(`#${elementId}`);
+    if (!this.#elementObj) {
+      throw new Error("This element id doesn't exit.");
+    }
+
+    if (spreadSpeed <= 0) {
+      throw new Error("'spreadSpeed' should be greater then 0.");
+    } else if (spreadSpeed > 100) {
+      console.warn("The max speed for 'spreadSpeed' is 100.");
+    }
+  }
 
   #createRootElement = () => {
     this.#rootElement = document.createElement('div');
@@ -176,13 +190,8 @@ class TypeGravity {
     }px`;
 
     this.#resetStage(padding, margin);
-    this.#textFrameMetrics = this.#textFrame.getMetrics(this.#stageSize);
+    this.#particles = this.#textFrame.getParticles(this.#stageSize);
     this.restart();
-  };
-
-  #onMouseMove = (event) => {
-    this.#mouse.x = event.clientX;
-    this.#mouse.y = event.clientY;
   };
 
   #resetStage = (padding, margin) => {
@@ -217,21 +226,39 @@ class TypeGravity {
     );
   };
 
-  #setEventTimer = () => {
+  #setSpreadTimer = () => {
     const intervalId = setInterval(() => {
       if (!this.#isInitialized) {
         return;
       }
 
-      if (this.#isDoneEvent) {
-        this.#stopEventTimer();
+      if (this.#isSpreadDone) {
+        this.#stopSpreadTimer();
         return;
       }
 
-      this.#eventHandler();
-    }, TypeGravity.FPS_TIME);
+      this.#spreadParticle();
+    }, TypeParticle.FPS_TIME);
 
-    this.#stopEventTimer = () => clearInterval(intervalId);
+    this.#stopSpreadTimer = () => clearInterval(intervalId);
+  };
+
+  #spreadParticle = () => {
+    this.#clearStage();
+
+    this.#particles.forEach((particle) => {
+      particle.update();
+
+      const index =
+        Math.round(particle.x) + Math.round(particle.y) * this.#stageSize.width;
+
+      this.#imageData.data[index * 4] = this.#fontRGB.r;
+      this.#imageData.data[index * 4 + 1] = this.#fontRGB.g;
+      this.#imageData.data[index * 4 + 2] = this.#fontRGB.b;
+      this.#imageData.data[index * 4 + 3] = particle.alpha;
+    });
+
+    this.#ctx.putImageData(this.#imageData, 0, 0);
   };
 
   #getClientSize = (elementObj, paddingWidth = 0, paddingHeight = 0) => {
@@ -241,33 +268,39 @@ class TypeGravity {
     };
   };
 
-  #eventHandler = () => {
-    let dx, dy, dist, minDist;
-    let angle, tx, ty, ax, ay;
+  get #isSpreadDone() {
+    return this.#particles[0].isDone;
+  }
 
-    this.#particleList.forEach((particle) => {
-      dx = this.#mouse.x - particle.pos.x;
-      dy = this.#mouse.y - particle.pos.y;
-      dist = Math.sqrt(dx * dx + dy * dy);
-      minDist = 50;
-
-      if (dist < minDist) {
-        angle = Math.atan2(dy, dx);
-        tx = particle.pos.x + Math.cos(angle) * minDist;
-        ty = particle.pos.y + Math.sin(angle) * minDist;
-        ax = tx - this.#mouse.x;
-        ay = ty - this.#mouse.y;
-
-        particle.posVelocity.vx -= ax;
-        particle.posVelocity.vy -= ay;
-        particle.collide();
-      }
-    });
+  #clearStage = () => {
+    for (let i = 0; i < this.#imageData.data.length; i++) {
+      this.#imageData.data[i] = 0;
+    }
   };
 
-  get #isDoneEvent() {
-    return true;
-  }
+  #parseIntSpreadMode = (spreadMode) => {
+    switch (spreadMode) {
+      case 'horizontal':
+        return HORIZONTAL;
+      case 'vertical':
+        return VERTICAL;
+      case 'left':
+        return LEFT;
+      case 'top':
+        return TOP;
+      case 'right':
+        return RIGHT;
+      case 'bottom':
+        return BOTTOM;
+      case 'all-side':
+        return ALL_SIDE;
+      default:
+        console.warn(
+          "Since this spread mode is not valid, 'all-side' is used as the default."
+        );
+        return ALL_SIDE;
+    }
+  };
 }
 
-export default TypeGravity;
+export default TypeParticle;

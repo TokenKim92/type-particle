@@ -1,23 +1,39 @@
+import Particle from './particle.js';
+import {
+  HORIZONTAL,
+  VERTICAL,
+  LEFT,
+  TOP,
+  RIGHT,
+  BOTTOM,
+  ALL_SIDE,
+} from './utils.js';
+
 class TextFrame {
   #ctx;
   #rootStyle;
   #text;
-  #alphaValue;
   #baseLinePos;
+  #particleEase;
+  #getSpreadPos;
+  #alpha;
 
-  constructor(ctx, rootStyle, text, alphaValue) {
+  constructor(ctx, rootStyle, text, spreadOption) {
     this.#ctx = ctx;
     this.#rootStyle = rootStyle;
     this.#text = text;
-    this.#alphaValue = alphaValue;
+
+    this.#particleEase = spreadOption.speed / 100;
+    this.#getSpreadPos = this.#getSpreadHandler(spreadOption.mode);
+    this.#alpha = spreadOption.alpha;
   }
 
-  getMetrics = (stageRect) => {
+  getParticles = (stageRect) => {
     this.#baseLinePos = [];
     this.#ctx.save();
 
     this.#ctx.font = `${this.#rootStyle.fontWeight} ${this.#rootStyle.fontSize} ${this.#rootStyle.fontFamily}`; //prettier-ignore
-    this.#ctx.fillStyle = 'rgb(0,0,0)'; //`rgba(255, 255, 255, ${this.#alphaValue})`;
+    this.#ctx.fillStyle = `rgba(255, 255, 255, ${this.#alpha})`;
     this.#ctx.textBaseline = 'middle';
 
     const textFields = [];
@@ -36,14 +52,12 @@ class TextFrame {
       });
     }
 
-    const dotPositions = this.#getDotPositions(stageRect, textFields);
-    //this.#ctx.clearRect(0, 0, stageRect.width, stageRect.height);
+    const particles = this.#createParticles(stageRect, textFields);
+
+    this.#ctx.clearRect(0, 0, stageRect.width, stageRect.height);
     this.#ctx.restore();
 
-    return {
-      textFields,
-      dotPositions,
-    };
+    return particles;
   };
 
   #getTextList = (stageRect) => {
@@ -117,7 +131,7 @@ class TextFrame {
       textField = {
         x:
           i === 0
-            ? Math.round(baseLinePos.x) - textMetrics.actualBoundingBoxLeft
+            ? Math.round(baseLinePos.x - textMetrics.actualBoundingBoxLeft)
             : Math.round(
                 textWidthList.reduce(
                   (sum, textWidth) => sum + textWidth,
@@ -145,25 +159,23 @@ class TextFrame {
     return textFields;
   };
 
-  #getDotPositions = (stageRect, textFields) => {
-    const dots = [];
+  #createParticles = (stageRect, textFields) => {
+    const particles = [];
     const imageData = this.#ctx.getImageData(
       0, 0, stageRect.width, stageRect.height
     ); // prettier-ignore
 
     let alpha = 0;
-    textFields.forEach((textField, index) => {
-      dots.push(new Array());
-
+    textFields.forEach((textField) => {
       for (let y = textField.y; y < textField.y + textField.height; y++) {
         for (let x = textField.x; x < textField.x + textField.width; x++) {
           alpha = imageData.data[(x + y * stageRect.width) * 4 + 3];
-          alpha && dots[index].push({ x, y, alpha });
+          alpha && particles.push(new Particle({x, y}, this.#getSpreadPos(x, y, textField), alpha, this.#particleEase));
         }
-      }
+      } // prettier-ignore
     });
 
-    return dots;
+    return particles;
   };
 
   #calculateBaseLinePos = (stageRect, textMetrics, index) => {
@@ -213,6 +225,47 @@ class TextFrame {
   #calculateLineCount = (stageRect) => {
     return Math.round(stageRect.height / this.#calculateLineHeight(stageRect));
   };
+
+  #getSpreadHandler(spreadMode) {
+    switch (spreadMode) {
+      case HORIZONTAL:
+        return (x, y, stageRect) => ({
+          x: Math.random() * stageRect.width + stageRect.x,
+          y,
+        });
+      case VERTICAL:
+        return (x, y, stageRect) => ({
+          x,
+          y: Math.random() * stageRect.height + stageRect.y,
+        });
+      case LEFT:
+        return (x, y, stageRect) => ({
+          x: 0,
+          y: Math.random() * stageRect.height + stageRect.y,
+        });
+      case TOP:
+        return (x, y, stageRect) => ({
+          x: Math.random() * stageRect.width + stageRect.x,
+          y: 0,
+        });
+      case RIGHT:
+        return (x, y, stageRect) => ({
+          x: stageRect.width + stageRect.x,
+          y: Math.random() * stageRect.height + stageRect.y,
+        });
+      case BOTTOM:
+        return (x, y, stageRect) => ({
+          x: Math.random() * stageRect.width + stageRect.x,
+          y: stageRect.height + stageRect.y,
+        });
+      case ALL_SIDE:
+      default:
+        return (x, y, stageRect) => ({
+          x: Math.random() * stageRect.width + stageRect.x,
+          y: Math.random() * stageRect.height + stageRect.y,
+        });
+    }
+  }
 }
 
 export default TextFrame;

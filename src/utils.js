@@ -1,3 +1,11 @@
+export const HORIZONTAL = 0;
+export const VERTICAL = 1;
+export const LEFT = 2;
+export const TOP = 3;
+export const RIGHT = 4;
+export const BOTTOM = 5;
+export const ALL_SIDE = 6;
+
 export const primitiveType = Object.freeze({
   string: 'string',
   number: 'number',
@@ -107,4 +115,13 @@ export const parseIntForPadding = (stylePadding) => {
 
 export const parseIntForMargin = (styleMargin) => {
   return parseIntForStyle(styleMargin);
+};
+
+export const posInRect = (position, rect) => {
+  return (
+    rect.x <= position.x &&
+    position.x <= rect.x + rect.width &&
+    rect.y <= position.y &&
+    position.y <= rect.y + rect.height
+  );
 };

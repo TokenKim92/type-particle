@@ -1,3 +1,8 @@
-import TypeGravity from '../src/typeGravity.js';
+import TypeParticle from '../src/typeParticle.js';
 
-new TypeGravity('type');
+const type = new TypeParticle('type');
+type.start();
+
+setTimeout(() => {
+  type.restart();
+}, 3000);
