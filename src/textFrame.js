@@ -17,6 +17,7 @@ class TextFrame {
   #particleEase;
   #getSpreadPos;
   #alpha;
+  #textCountPerLine = [];
 
   constructor(ctx, rootStyle, text, spreadOption) {
     this.#ctx = ctx;
@@ -30,6 +31,7 @@ class TextFrame {
 
   getParticles = (stageRect) => {
     this.#baseLinePos = [];
+    this.#textCountPerLine = [];
     this.#ctx.save();
 
     this.#ctx.font = `${this.#rootStyle.fontWeight} ${this.#rootStyle.fontSize} ${this.#rootStyle.fontFamily}`; //prettier-ignore
@@ -42,13 +44,22 @@ class TextFrame {
       this.#getTextFields(this.#text).forEach((textField) =>
         textFields.push(textField)
       );
+
+      this.#textCountPerLine.push(textFields.length);
     } else {
       const textList = this.#getTextList(stageRect);
+      let curTextCount;
+      let prevTextCount = 0;
+
       textList.forEach((lineText, index) => {
         this.#drawTextFrame(stageRect, lineText, index);
         this.#getTextFields(lineText, index).forEach((textField) =>
           textFields.push(textField)
         );
+
+        curTextCount = textFields.length;
+        this.#textCountPerLine.push(curTextCount - prevTextCount);
+        prevTextCount = curTextCount;
       });
     }
 
@@ -165,12 +176,26 @@ class TextFrame {
       0, 0, stageRect.width, stageRect.height
     ); // prettier-ignore
 
+    const lineHeight = this.#calculateLineHeight(stageRect);
+    const lineStageRect = {
+      x: stageRect.x,
+      y: stageRect.y,
+      width: stageRect.width,
+      height: lineHeight,
+    };
+    let lineIndex = 0;
     let alpha = 0;
-    textFields.forEach((textField) => {
+
+    textFields.forEach((textField, index) => {
+      if (lineIndex < Math.floor(index / this.#textCountPerLine[lineIndex])) {
+        lineIndex++;
+        lineStageRect.y = stageRect.y + lineHeight * lineIndex;
+      }
+
       for (let y = textField.y; y < textField.y + textField.height; y++) {
         for (let x = textField.x; x < textField.x + textField.width; x++) {
           alpha = imageData.data[(x + y * stageRect.width) * 4 + 3];
-          alpha && particles.push(new Particle({x, y}, this.#getSpreadPos(x, y, textField), alpha, this.#particleEase));
+          alpha && particles.push(new Particle({x, y}, this.#getSpreadPos(x, y, lineStageRect), alpha, this.#particleEase));
         }
       } // prettier-ignore
     });

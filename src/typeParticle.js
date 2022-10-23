@@ -62,7 +62,13 @@ class TypeParticle {
         this.#spreadOption
       );
 
-      this.#particles = this.#textFrame.getParticles(this.#stageSize);
+      const stageRect = {
+        x: 0,
+        y: 0,
+        width: this.#stageSize.width,
+        height: this.#stageSize.height,
+      };
+      this.#particles = this.#textFrame.getParticles(stageRect);
       this.#ctx.fillStyle = this.#rootStyle.color;
       this.#isInitialized = true;
     }, 380);
@@ -190,7 +196,13 @@ class TypeParticle {
     }px`;
 
     this.#resetStage(padding, margin);
-    this.#particles = this.#textFrame.getParticles(this.#stageSize);
+    const stageRect = {
+      x: 0,
+      y: 0,
+      width: this.#stageSize.width,
+      height: this.#stageSize.height,
+    };
+    this.#particles = this.#textFrame.getParticles(stageRect);
     this.restart();
   };
 

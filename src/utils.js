@@ -22,12 +22,6 @@ export const checkType = (item, type) => {
   }
 };
 
-export const randomPosInRect = (rect) => {
-  const x = Math.round(rect.x + Math.random() * rect.width);
-  const y = Math.round(rect.y + Math.random() * rect.height);
-  return { x, y };
-};
-
 const errorMsgForRGB =
   "The color type should be 'rgb' or 'hex' like 'rgb(0, 0, 0)' or '#000000'.";
 
@@ -115,13 +109,4 @@ export const parseIntForPadding = (stylePadding) => {
 
 export const parseIntForMargin = (styleMargin) => {
   return parseIntForStyle(styleMargin);
-};
-
-export const posInRect = (position, rect) => {
-  return (
-    rect.x <= position.x &&
-    position.x <= rect.x + rect.width &&
-    rect.y <= position.y &&
-    position.y <= rect.y + rect.height
-  );
 };

@@ -4,16 +4,14 @@ export default class Particle {
   #spreadX;
   #spreadY;
   #ease;
-  #offsetDone = 10;
+  #offsetDone = 100;
 
   constructor(orgPos, spreadPos, alpha, ease) {
     this.#orgX = orgPos.x;
     this.#orgY = orgPos.y;
     this.#spreadX = spreadPos.x;
     this.#spreadY = spreadPos.y;
-
     this.#ease = ease;
-
     this.alpha = alpha;
 
     this.reset();
