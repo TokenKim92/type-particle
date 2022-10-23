@@ -1,0 +1,25 @@
+{
+  "name": "typeparticle",
+  "version": "1.0.0",
+  "description": "a library to create type fill effects in web",
+  "main": "webpack.config.js",
+  "scripts": {
+    "build": "webpack --mode development",
+    "build-prod": "webpack --mode production"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TokenKim92/typeparticle.git"
+  },
+  "author": "Token Kim",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/TokenKim92/typeparticle/issues"
+  },
+  "homepage": "https://github.com/TokenKim92/typeparticle#readme",
+  "sideEffects": false,
+  "devDependencies": {
+    "webpack": "^5.74.0",
+    "webpack-cli": "^4.10.0"
+  }
+}
