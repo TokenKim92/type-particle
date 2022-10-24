@@ -17,6 +17,7 @@ import {
 class TypeParticle {
   static FPS = 60;
   static FPS_TIME = 1000 / TypeParticle.FPS;
+  static OPACITY_TRANSITION_TIME = 300;
 
   #canvasContainer;
   #canvas;
@@ -71,7 +72,7 @@ class TypeParticle {
       this.#particles = this.#textFrame.getParticles(stageRect);
       this.#ctx.fillStyle = this.#rootStyle.color;
       this.#isInitialized = true;
-    }, 380);
+    }, TypeParticle.OPACITY_TRANSITION_TIME * 1.1);
 
     window.addEventListener('resize', this.#resize);
   }
@@ -127,7 +128,7 @@ class TypeParticle {
     this.#rootElement.append(this.#elementObj);
 
     this.#rootElement.style.position = 'relative';
-    this.#elementObj.style.transition = 'opacity 300ms ease-out';
+    this.#elementObj.style.transition = `opacity ${TypeParticle.OPACITY_TRANSITION_TIME}ms ease-out`;
     setTimeout(() => {
       this.#elementObj.style.opacity = 0;
     }, 1);
@@ -141,7 +142,10 @@ class TypeParticle {
     this.#backgroundSize = this.#getClientSize(this.#elementObj);
 
     this.#canvasContainer = document.createElement('div');
-    this.#canvasContainer.style.transform = this.#rootStyle.transform;
+    this.#canvasContainer.style.transform =
+      this.#rootStyle.display !== 'inline'
+        ? this.#rootStyle.transform
+        : 'matrix(1, 0, 0, 1, 0, 0)';
     this.#canvasContainer.style.top = `-${
       this.#backgroundSize.height + margin.top + margin.bottom
     }px`;
