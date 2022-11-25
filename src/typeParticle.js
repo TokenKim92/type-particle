@@ -16,7 +16,6 @@ import {
 
 class TypeParticle {
   static FPS = 60;
-  static FPS_TIME = 1000 / TypeParticle.FPS;
   static OPACITY_TRANSITION_TIME = 300;
 
   #canvasContainer;
@@ -27,7 +26,6 @@ class TypeParticle {
   #rootElement;
   #elementObj;
   #text;
-  #stopSpreadTimer;
   #textFrame;
   #particles = [];
   #imageData;
@@ -78,28 +76,37 @@ class TypeParticle {
   }
 
   start = () => {
+    if (!this.#isInitialized) {
+      setTimeout(() => this.start(), TypeParticle.OPACITY_TRANSITION_TIME);
+
+      return;
+    }
+
     if (!this.#isProcessing) {
-      this.#setSpreadTimer();
       this.#isProcessing = true;
+      requestAnimationFrame(this.#draw);
     }
   };
 
   stop = () => {
     if (this.#isProcessing) {
-      this.#stopSpreadTimer();
       this.#isProcessing = false;
     }
   };
 
   restart = () => {
-    if (this.#isProcessing) {
-      this.#stopSpreadTimer();
+    if (!this.#isInitialized) {
+      setTimeout(() => this.start(), TypeFill.OPACITY_TRANSITION_TIME);
+
+      return;
     }
 
     this.#particles.forEach((particle) => particle.reset());
-    this.#isProcessing = true;
 
-    this.#setSpreadTimer();
+    if (!this.#isProcessing) {
+      this.#isProcessing = true;
+      requestAnimationFrame(this.#draw);
+    }
   };
 
   #typeCheck(elementId, spreadSpeed, spreadMode) {
@@ -242,21 +249,15 @@ class TypeParticle {
     );
   };
 
-  #setSpreadTimer = () => {
-    const intervalId = setInterval(() => {
-      if (!this.#isInitialized) {
-        return;
-      }
+  #draw = () => {
+    if (this.#isSpreadDone || !this.#isProcessing) {
+      this.#isProcessing = false;
+      return;
+    }
 
-      if (this.#isSpreadDone) {
-        this.#stopSpreadTimer();
-        return;
-      }
+    this.#spreadParticle();
 
-      this.#spreadParticle();
-    }, TypeParticle.FPS_TIME);
-
-    this.#stopSpreadTimer = () => clearInterval(intervalId);
+    requestAnimationFrame(this.#draw);
   };
 
   #spreadParticle = () => {
