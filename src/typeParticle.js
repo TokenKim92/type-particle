@@ -51,26 +51,10 @@ class TypeParticle {
 
     this.#createRootElement();
 
-    setTimeout(() => {
-      this.#createCanvases();
-
-      this.#textFrame = new TextFrame(
-        this.#ctx,
-        this.#rootStyle,
-        this.#text,
-        this.#spreadOption
-      );
-
-      const stageRect = {
-        x: 0,
-        y: 0,
-        width: this.#stageSize.width,
-        height: this.#stageSize.height,
-      };
-      this.#particles = this.#textFrame.getParticles(stageRect);
-      this.#ctx.fillStyle = this.#rootStyle.color;
-      this.#isInitialized = true;
-    }, TypeParticle.OPACITY_TRANSITION_TIME * 1.1);
+    setTimeout(
+      () => this.#initAfterTextDisappears(),
+      TypeParticle.OPACITY_TRANSITION_TIME * 1.1
+    );
 
     window.addEventListener('resize', this.#resize);
   }
@@ -142,23 +126,19 @@ class TypeParticle {
   };
 
   #createCanvases = () => {
-    const padding = parseIntForPadding(this.#rootStyle.padding);
-    const margin = parseIntForMargin(this.#rootStyle.margin);
-    const toBeCreatedBackground =
-      colorToRGB(this.#rootStyle.backgroundColor).a !== 0;
-    this.#backgroundSize = this.#getClientSize(this.#elementObj);
+    const createCanvasContainer = () => {
+      this.#canvasContainer = document.createElement('div');
+      this.#canvasContainer.style.transform =
+        this.#rootStyle.display !== 'inline'
+          ? this.#rootStyle.transform
+          : 'matrix(1, 0, 0, 1, 0, 0)';
+      this.#canvasContainer.style.top = `-${
+        this.#backgroundSize.height + margin.top + margin.bottom
+      }px`;
+      this.#canvasContainer.style.position = 'relative';
+    };
 
-    this.#canvasContainer = document.createElement('div');
-    this.#canvasContainer.style.transform =
-      this.#rootStyle.display !== 'inline'
-        ? this.#rootStyle.transform
-        : 'matrix(1, 0, 0, 1, 0, 0)';
-    this.#canvasContainer.style.top = `-${
-      this.#backgroundSize.height + margin.top + margin.bottom
-    }px`;
-    this.#canvasContainer.style.position = 'relative';
-
-    if (toBeCreatedBackground) {
+    const createBackgroundCanvas = () => {
       this.#backgroundCanvas = document.createElement('canvas');
       this.#backgroundCtx = this.#backgroundCanvas.getContext('2d');
       this.#backgroundCanvas.style.cssText = `
@@ -167,17 +147,53 @@ class TypeParticle {
       `;
       this.#resetBackground();
       this.#backgroundCanvas.style.position = 'absolute';
+    };
+
+    const createCanvas = () => {
+      this.#canvas = document.createElement('canvas');
+      this.#ctx = this.#canvas.getContext('2d', { willReadFrequently: true });
+      this.#canvas.style.position = 'absolute';
+      this.#canvas.style.top = `${padding.top + margin.top}px`;
+    };
+
+    const padding = parseIntForPadding(this.#rootStyle.padding);
+    const margin = parseIntForMargin(this.#rootStyle.margin);
+    const toBeCreatedBackground =
+      colorToRGB(this.#rootStyle.backgroundColor).a !== 0;
+    this.#backgroundSize = this.#getClientSize(this.#elementObj);
+
+    createCanvasContainer();
+    if (toBeCreatedBackground) {
+      createBackgroundCanvas();
       this.#canvasContainer.append(this.#backgroundCanvas);
     }
 
-    this.#canvas = document.createElement('canvas');
-    this.#ctx = this.#canvas.getContext('2d', { willReadFrequently: true });
-    this.#canvas.style.top = `${padding.top + margin.top}px`;
-    this.#canvas.style.position = 'absolute';
-    this.#resetStage(padding, margin);
-
+    createCanvas();
     this.#canvasContainer.append(this.#canvas);
     this.#rootElement.append(this.#canvasContainer);
+
+    this.#resetStage(padding, margin);
+  };
+
+  #initAfterTextDisappears = () => {
+    this.#createCanvases();
+
+    this.#textFrame = new TextFrame(
+      this.#ctx,
+      this.#rootStyle,
+      this.#text,
+      this.#spreadOption
+    );
+
+    const stageRect = {
+      x: 0,
+      y: 0,
+      width: this.#stageSize.width,
+      height: this.#stageSize.height,
+    };
+    this.#particles = this.#textFrame.getParticles(stageRect);
+    this.#ctx.fillStyle = this.#rootStyle.color;
+    this.#isInitialized = true;
   };
 
   #resize = () => {
