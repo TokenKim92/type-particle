@@ -36,6 +36,7 @@ class TypeParticle {
   #isProcessing = false;
   #isInitialized = false;
   #spreadOption;
+  #handleStopped;
 
   constructor(elementId, spreadSpeed = 10, spreadMode = 'all-side') {
     this.#typeCheck(elementId, spreadSpeed, spreadMode);
@@ -91,6 +92,10 @@ class TypeParticle {
       this.#isProcessing = true;
       requestAnimationFrame(this.#draw);
     }
+  };
+
+  setHandleStopped = (action) => {
+    this.#handleStopped = action;
   };
 
   #typeCheck(elementId, spreadSpeed, spreadMode) {
@@ -266,8 +271,14 @@ class TypeParticle {
   };
 
   #draw = () => {
-    if (this.#isSpreadDone || !this.#isProcessing) {
+    if (!this.#isProcessing) {
+      return;
+    }
+
+    if (this.#isSpreadDone) {
       this.#isProcessing = false;
+      this.#handleStopped && this.#handleStopped();
+
       return;
     }
 
