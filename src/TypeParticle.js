@@ -1,5 +1,5 @@
 import BaseType from './BaseType.js';
-import Particle from './particle.js';
+import Particle from './Particle.js';
 import { checkType, primitiveType } from './utils.js';
 
 export default class TypeParticle extends BaseType {
