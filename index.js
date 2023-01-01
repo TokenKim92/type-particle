@@ -1,4 +1,4 @@
-import TypeParticle from '../src/typeParticle.js';
+import TypeParticle from './src/TypeParticle.js';
 
 const type = new TypeParticle('type');
 type.start();
