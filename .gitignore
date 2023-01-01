@@ -1,6 +1,3 @@
 # directoy
 dist
 node_modules
-
-# npm file
-package-lock.json

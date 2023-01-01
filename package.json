@@ -1,25 +1,22 @@
 {
-  "name": "typeparticle",
+  "name": "type-particle",
   "version": "1.0.0",
-  "description": "a library to create type fill effects in web",
-  "main": "webpack.config.js",
+  "homepage": "https://github.com/TokenKim92/type-particle.js",
+  "repository": "https://github.com/TokenKim92/type-particle.js",
+  "description": "A library to create collect effects in web font",
+  "license": "MIT",
+  "author": "Deokgeun Kim",
+  "main": "dist/type-particle.min.js",
+  "keywords": [
+    "type",
+    "animation"
+  ],
   "scripts": {
     "build": "webpack --mode development",
     "build-prod": "webpack --mode production"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/TokenKim92/typeparticle.git"
-  },
-  "author": "Token Kim",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/TokenKim92/typeparticle/issues"
-  },
-  "homepage": "https://github.com/TokenKim92/typeparticle#readme",
-  "sideEffects": false,
   "devDependencies": {
-    "webpack": "^5.74.0",
+    "webpack": "^5.75.0",
     "webpack-cli": "^4.10.0"
   }
 }

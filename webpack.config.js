@@ -4,14 +4,15 @@ const pkg = require('./package.json');
 const isProduction = process.argv[process.argv.indexOf('--mode') + 1] === 'production'; //prettier-ignore
 const FILENAME = pkg.name + (isProduction ? '.min' : '');
 const BANNER = [
-  'TypeParticle',
-  '@version ' + pkg.version + ' | ' + new Date().toDateString(),
-  '@author ' + pkg.author,
-  '@license ' + pkg.license,
+  'Name: ' + pkg.name + ' | ' + pkg.description,
+  'Version: ' + pkg.version + ' | ' + new Date().toDateString(),
+  'Author: ' + pkg.author,
+  'License: ' + pkg.license,
+  'Url: ' + pkg.homepage,
 ].join('\n');
 
 const config = {
-  entry: './src/typeParticle.js',
+  entry: './src/TypeParticle.js',
   output: {
     path: path.join(__dirname, 'dist'),
     filename: FILENAME + '.js',
@@ -19,6 +20,7 @@ const config = {
     libraryTarget: 'umd',
     libraryExport: 'default',
   },
+  devtool: 'eval',
   plugins: [
     new webpack.BannerPlugin({
       banner: BANNER,
